@@ -35,23 +35,6 @@ function fold(points, fold) {
     return folded;
 }
 
-function display(pixels) {
-    const maxX = pixels.reduce((acc, cur) => Math.max(acc, cur[0]), 0);
-    const maxY = pixels.reduce((acc, cur) => Math.max(acc, cur[1]), 0);
-    const lib = new Set(pixels.map((x) => x.join(",")));
-    console.log(maxX, maxY, lib);
-    for (let i = 0; i <= maxY; i++) {
-        for (let j = 0; j <= maxX; j++) {
-            if (lib.has([j, i].join(","))) {
-                process.stdout.write("#");
-            } else {
-                process.stdout.write(" ");
-            }
-        }
-        process.stdout.write("\n");
-    }
-}
-
 readFile("./data.txt", "utf8", (err, data) => {
     let [points, folds] = readInput(data);
     for (let f of folds) {
@@ -61,5 +44,4 @@ readFile("./data.txt", "utf8", (err, data) => {
             new Set(points.map((x) => x.join("->"))).size
         );
     }
-    display(points);
 });

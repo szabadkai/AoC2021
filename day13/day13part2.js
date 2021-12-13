@@ -1,69 +1,65 @@
 import { readFile } from "fs";
 
 function readInput(input) {
-    return input.split("\n").map((x) => x.split("-"));
+    const [points, folds] = input.split("\n\n");
+    return [
+        points
+            .split("\n")
+            .filter((x) => x !== "\n")
+            .map((x) => x.split(",").map(Number)),
+        folds.split("\n").map((x) => x.split(" ")[2].split("=")),
+    ];
 }
 
-function buildMap(input) {
-    let map = {};
-    input.forEach((x) => {
-        let [start, end] = x;
-        if (map[start] === undefined) {
-            map[start] = [end];
-        } else {
-            map[start].push(end);
+function fold(points, fold) {
+    const folded = [];
+    let [axis, coordinate] = fold;
+    coordinate = Number(coordinate);
+    console.log(axis, coordinate);
+    for (let point of points) {
+        if (axis === "x") {
+            if (point[0] > coordinate) {
+                folded.push([coordinate - (point[0] - coordinate), point[1]]);
+            } else {
+                folded.push([point[0], point[1]]);
+            }
         }
-        if (map[end] === undefined) {
-            map[end] = [start];
-        } else {
-            map[end].push(start);
+        if (axis === "y") {
+            if (point[1] > coordinate) {
+                folded.push([point[0], coordinate - (point[1] - coordinate)]);
+            } else {
+                folded.push([point[0], point[1]]);
+            }
         }
-    });
-    return map;
+    }
+    return folded;
 }
 
-function canVisit(node, path) {
-    if (node === "start") return false;
-    if (node.toUpperCase() === node) return true;
-    const p = path.split("->");
-    const counter = {};
-    for (let n of p) {
-        if (counter[n]) counter[n]++;
-        else counter[n] = 1;
-    }
-    const visitedTwice = Object.keys(counter).filter(
-        (n) => n === n.toLowerCase() && counter[n] > 1
-    );
-    return counter[node] === undefined || !visitedTwice.length;
-}
-
-function visitNodes(map, start, visited) {
-    visited.add(start);
-    if (start === "end") {
-        return 1;
-    }
-    for (let node of map[start].filter((node) => canVisit(node, visited))) {
+function display(pixels) {
+    const maxX = pixels.reduce((acc, cur) => Math.max(acc, cur[0]), 0);
+    const maxY = pixels.reduce((acc, cur) => Math.max(acc, cur[1]), 0);
+    const lib = new Set(pixels.map((x) => x.join(",")));
+    console.log(maxX, maxY, lib);
+    for (let i = 0; i <= maxY; i++) {
+        for (let j = 0; j <= maxX; j++) {
+            if (lib.has([j, i].join(","))) {
+                process.stdout.write("#");
+            } else {
+                process.stdout.write(" ");
+            }
+        }
+        process.stdout.write("\n");
     }
 }
 
 readFile("./data.txt", "utf8", (err, data) => {
-    let input = readInput(data);
-    const map = buildMap(input);
-    const visited = new Set();
-    visited.add("start");
-    while (![...visited].every((path) => path.endsWith("end"))) {
-        for (let path of visited) {
-            if (!path.endsWith("end")) {
-                const key = path.split("->").pop();
-                for (let node of map[key].filter((node) =>
-                    canVisit(node, path)
-                )) {
-                    visited.add(path + "->" + node);
-                }
-                visited.delete(path);
-            }
-        }
+    let [points, folds] = readInput(data);
+    for (let f of folds) {
+        points = fold(points, f);
+        console.log(
+            `folding in ${JSON.stringify(f)}`,
+            new Set(points.map((x) => x.join("->"))).size
+        );
     }
-
-    console.log(visited.size);
+    display(points);
 });
