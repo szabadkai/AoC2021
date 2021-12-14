@@ -10,39 +10,54 @@ function readInput(input) {
             cookbook[pattern] = insert;
         });
     const start = {};
-    for (let i = 0; i < template.length; i++) {}
-    return [cookbook, [template]];
+    for (let i = 0; i < template.length - 1; i++) {
+        const key = template.slice(i, i + 2);
+        if (start[key] === undefined) {
+            start[key] = 1;
+        } else {
+            start[key]++;
+        }
+    }
+    return [cookbook, start, template[template.length - 1]];
 }
 
 function grow(template, cookbook) {
-    const molecule = [];
-    for (let i = 0; i < template.length; i++) {
-        molecule.push(template[i]);
-        molecule.push(cookbook[template.slice(i, i + 2)]);
+    const molecule = {};
+    for (let [pair, count] of Object.entries(template)) {
+        const [first, second] = pair.split("");
+
+        for (let item of [first + cookbook[pair], cookbook[pair] + second]) {
+            if (molecule[item] === undefined) {
+                molecule[item] = count;
+            } else {
+                molecule[item] += count;
+            }
+        }
     }
-    return molecule.join("");
+    return molecule;
 }
 
 readFile("./data.txt", "utf8", (err, data) => {
     let [pairs, template] = readInput(data);
-    console.log(template, pairs);
-    for (let i = 0; i < 41; i++) {
+    for (let i = 0; i < 40; i++) {
         template = grow(template, pairs);
-
-        const counter = {};
-        for (let i = 0; i < template.length; i++) {
-            let key = template[i];
-            if (counter.hasOwnProperty(key)) {
-                counter[key]++;
-            } else {
-                counter[key] = 1;
+        const counter = { K: 1, B: 1 };
+        for (let [key, value] of Object.entries(template)) {
+            for (let char of key.split("")) {
+                if (counter[char] === undefined) {
+                    counter[char] = value;
+                } else {
+                    counter[char] += value;
+                }
             }
         }
+
         console.log(
             i,
-            Math.max(...Object.values(counter)) -
-                Math.min(...Object.values(counter)),
-            counter
+            template,
+            counter,
+            Math.max(...Object.values(counter)) / 2 -
+                Math.min(...Object.values(counter)) / 2
         );
     }
 });
